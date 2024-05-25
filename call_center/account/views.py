@@ -192,7 +192,7 @@ class ResetPasswordView(mixins.UpdateModelMixin, generics.GenericAPIView):
             account_email_token = AccountEmailToken.objects.select_related(
                 "account"
             ).get(token=input_token)
-        except Account.DoesNotExist:
+        except AccountEmailToken.DoesNotExist:
             return Response(
                 {"error_code": AccountEmailTokenError.TOKEN_DOES_NOT_EXIST},
                 status=status.HTTP_404_NOT_FOUND,
@@ -221,3 +221,33 @@ class ResetPasswordView(mixins.UpdateModelMixin, generics.GenericAPIView):
         account_email_token.save()
 
         return Response({"status": "OK"}, status=status.HTTP_200_OK)
+
+
+class ResetPasswordIsAvailableView(mixins.RetrieveModelMixin, generics.GenericAPIView):
+
+    queryset = Account.objects.all()
+    serializer_class = AccountEmailTokenSerializer
+
+    def get(self, request, *args, **kwargs):
+
+        input_token = request.query_params.get("token", None)
+        if input_token is None:
+            return Response(
+                "mising query param 'token'", status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            account_email_token = AccountEmailToken.objects.get(token=input_token)
+        except AccountEmailToken.DoesNotExist:
+            return Response({"is_available": False}, status=status.HTTP_200_OK)
+
+        if account_email_token.status == AccountEmailTokenStatusEnum.inactive.value:
+            return Response({"is_available": False}, status=status.HTTP_200_OK)
+
+        if account_email_token.expired_at < timezone.now():
+            if account_email_token.status == AccountEmailTokenStatusEnum.active.value:
+                account_email_token.status = AccountEmailTokenStatusEnum.inactive.value
+                account_email_token.save()
+            return Response({"is_available": False}, status=status.HTTP_200_OK)
+
+        return Response({"is_available": True}, status=status.HTTP_200_OK)
