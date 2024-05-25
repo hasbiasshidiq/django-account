@@ -4,7 +4,14 @@ from . import views
 urlpatterns = [
     path("", views.AccountListCreate.as_view(), name="account-list"),
     path(
-        "<int:pk>/", views.AccountRetrieveUpdateDestroy.as_view(), name="account-detail"
+        "<int:pk>/",
+        views.AccountRetrieveUpdateDestroy.as_view(),
+        name="account-detail",
+    ),
+    path(
+        "<int:pk>/status",
+        views.AccountUpdateStatusView.as_view(),
+        name="account-update-status",
     ),
     path(
         "has-set-password",

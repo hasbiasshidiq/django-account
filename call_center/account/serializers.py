@@ -2,6 +2,9 @@ from rest_framework import serializers
 from .models import Account, AccountEmailToken
 
 
+###################################
+######## ACCOUNT SERILIZER ########
+###################################
 class AccountDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
@@ -27,6 +30,15 @@ class AccountCreateSerializer(serializers.ModelSerializer):
         return data
 
 
+class AccountUpdateStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        fields = ["status"]
+
+
+###############################################
+######## ACCOUNT EMAIL TOKEN SERILIZER ########
+###############################################
 class AccountEmailTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccountEmailToken

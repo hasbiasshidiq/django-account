@@ -19,6 +19,7 @@ from .serializers import (
     AccountDetailSerializer,
     AccountEmailTokenSerializer,
     AccountListSerializer,
+    AccountUpdateStatusSerializer,
     ForgotPasswordSerializer,
     ResetPasswordSerializer,
     SetInitialPasswordPayloadSerializer,
@@ -74,6 +75,31 @@ class AccountRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Account.objects.all()
     serializer_class = AccountDetailSerializer
     permission_classes = [IsAuthenticated]
+
+
+class AccountUpdateStatusView(mixins.UpdateModelMixin, generics.GenericAPIView):
+    queryset = Account.objects.all()
+    serializer_class = AccountUpdateStatusSerializer
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, *args, **kwargs):
+        print(kwargs)
+        user_id = kwargs.get("pk")
+        try:
+            account = Account.objects.get(id=user_id)
+        except Account.DoesNotExist:
+            return Response(
+                {"error_code": AccountError.USER_DOES_NOT_EXIST},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = AccountUpdateStatusSerializer(
+            account, data=request.data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AccountHasSetPasswordView(mixins.RetrieveModelMixin, generics.GenericAPIView):
