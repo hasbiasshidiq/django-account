@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import uuid
 
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.utils import timezone
 
@@ -34,7 +34,6 @@ import random
 
 class AccountListCreate(generics.ListCreateAPIView):
     queryset = Account.objects.all()
-    permission_classes = [IsAuthenticated]
 
     def send_password_email(self, recipient_email, password):
         subject = "Test Email"
@@ -74,16 +73,13 @@ class AccountListCreate(generics.ListCreateAPIView):
 class AccountRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Account.objects.all()
     serializer_class = AccountDetailSerializer
-    permission_classes = [IsAuthenticated]
 
 
 class AccountUpdateStatusView(mixins.UpdateModelMixin, generics.GenericAPIView):
     queryset = Account.objects.all()
     serializer_class = AccountUpdateStatusSerializer
-    permission_classes = [IsAuthenticated]
 
     def put(self, request, *args, **kwargs):
-        print(kwargs)
         user_id = kwargs.get("pk")
         try:
             account = Account.objects.get(id=user_id)
@@ -106,7 +102,6 @@ class AccountHasSetPasswordView(mixins.RetrieveModelMixin, generics.GenericAPIVi
 
     queryset = Account.objects.all()
     serializer_class = AccountDetailSerializer
-    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         email = request.user.email
@@ -127,7 +122,6 @@ class SetPasswordView(mixins.UpdateModelMixin, generics.GenericAPIView):
 
     queryset = Account.objects.all()
     serializer_class = AccountDetailSerializer
-    permission_classes = [IsAuthenticated]
 
     def put(self, request, *args, **kwargs):
         serializer = SetInitialPasswordPayloadSerializer(data=request.data)
@@ -157,6 +151,7 @@ class ForgotPasswordView(mixins.CreateModelMixin, generics.GenericAPIView):
 
     queryset = Account.objects.all()
     serializer_class = AccountEmailTokenSerializer
+    permission_classes = [AllowAny]
 
     def send_forgot_password_email(self, recipient_email, token):
         subject = "Test Forgot Password"
@@ -205,6 +200,7 @@ class ResetPasswordView(mixins.UpdateModelMixin, generics.GenericAPIView):
 
     queryset = Account.objects.all()
     serializer_class = AccountEmailTokenSerializer
+    permission_classes = [AllowAny]
 
     def put(self, request, *args, **kwargs):
         serializer = ResetPasswordSerializer(data=request.data)
@@ -253,6 +249,7 @@ class ResetPasswordIsAvailableView(mixins.RetrieveModelMixin, generics.GenericAP
 
     queryset = Account.objects.all()
     serializer_class = AccountEmailTokenSerializer
+    permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
 
