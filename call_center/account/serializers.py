@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from .models import Account
-from django.utils.translation import gettext_lazy as _
+from .models import Account, AccountEmailToken
 
 
 class AccountDetailSerializer(serializers.ModelSerializer):
@@ -15,6 +14,39 @@ class AccountListSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "email", "role", "status"]
 
 
+class AccountCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        fields = ["id", "name", "email", "password", "role", "status"]
+
+    def to_representation(self, instance):
+        # Call the parent class's to_representation() method
+        data = super().to_representation(instance)
+        # Exclude the 'password' field from the serialized data
+        data.pop("password", None)
+        return data
+
+
+class AccountEmailTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccountEmailToken
+        fields = ["id", "account", "token", "expired_at"]
+
+
+###################################
+######## REQUEST SERILIZER ########
+###################################
+
+
+# class to parse endpoint SetInitialPassword
 class SetInitialPasswordPayloadSerializer(serializers.Serializer):
-    email = serializers.EmailField()
     password = serializers.CharField(max_length=128)
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    token = serializers.UUIDField()
+    new_password = serializers.CharField(max_length=128)

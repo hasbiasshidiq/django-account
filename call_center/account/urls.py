@@ -4,18 +4,14 @@ from . import views
 urlpatterns = [
     path("", views.AccountListCreate.as_view(), name="account-list"),
     path(
-        "<int:pk>/",
-        views.AccountRetrieveUpdateDestroy.as_view(),
-        name="account-detail",
+        "<int:pk>/", views.AccountRetrieveUpdateDestroy.as_view(), name="account-detail"
     ),
     path(
-        "password-availability/",
-        views.AccountPasswordAvailabilityView.as_view(),
-        name="password-availability",
+        "has-set-password",
+        views.AccountHasSetPasswordView.as_view(),
+        name="has-set-password",
     ),
-    path(
-        "set-password",
-        views.SetInitialPasswordView.as_view(),
-        name="set-password",
-    ),
+    path("set-password", views.SetPasswordView.as_view(), name="set-password"),
+    path("forgot-password", views.ForgotPasswordView.as_view(), name="forgot-password"),
+    path("reset-password", views.ResetPasswordView.as_view(), name="reset-password"),
 ]
