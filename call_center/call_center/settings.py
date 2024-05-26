@@ -35,6 +35,7 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
+        "permission.apps.CustomDefaultPermission",
     ],
 }
 
@@ -65,10 +66,15 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "call_center.urls"
 
+PROJECT_PATH = os.path.realpath(os.path.dirname(__file__))
+TEMPLATE_DIRS = [
+    os.path.join(PROJECT_PATH, "templates/"),
+]
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": TEMPLATE_DIRS,
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -80,6 +86,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 WSGI_APPLICATION = "call_center.wsgi.application"
 
