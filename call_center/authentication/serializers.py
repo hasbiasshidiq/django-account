@@ -13,33 +13,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         # Add custom claims
         token["email"] = user.email
+        token["role"] = user.role
 
         return token
-
-    # def validate(self, attrs):
-    #     username = attrs.get("username")
-    #     password = attrs.get("password")
-
-    #     # Check if the account exists
-    #     try:
-    #         user = Account.objects.get(username=username)
-    #     except Account.DoesNotExist:
-    #         raise AuthenticationFailed({"message": "Account not found"})
-
-    #     # Check if the password matches
-    #     user = authenticate(username=username, password=password)
-    #     if user is None:
-    #         raise AuthenticationFailed({"message": "Account and password do not match"})
-
-    #     # Everything is fine, proceed with the normal flow
-    #     refresh = self.get_token(user)
-
-    #     data = {
-    #         "refresh": str(refresh),
-    #         "access": str(refresh.access_token),
-    #     }
-
-    #     return data
 
 
 class TokenObtainPairRequestSerializer(serializers.Serializer):
