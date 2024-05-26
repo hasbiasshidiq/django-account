@@ -1,11 +1,14 @@
-from datetime import datetime, timedelta
 import uuid
 
+from datetime import timedelta
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.utils import timezone
+from django.template.loader import render_to_string
 
+
+from permission.apps import IsSuperAdmin, IsSupervisor
 
 from .const import AccountError, AccountEmailTokenError
 from .models import (
@@ -32,27 +35,28 @@ from rest_framework import mixins
 import random
 
 
-class AccountListCreate(generics.ListCreateAPIView):
+class AccountListCreateView(generics.ListCreateAPIView):
     queryset = Account.objects.all()
+
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [IsAuthenticated(), IsSuperAdmin(), IsSupervisor()]
+        return super().get_permissions()
 
     def send_password_email(self, recipient_email, password):
         subject = "Test Email"
-        message = f"Your password : {password}"
+        message = f"Your Password : {password}"
         recipient_list = [recipient_email]
 
         send_mail(
-            subject,
-            message,
-            "hasbiasshidiq@gmail.com",  # From email
-            recipient_list,
+            subject=subject,
+            message=message,
+            from_email="hasbiasshidiq@gmail.com",  # From email
+            recipient_list=recipient_list,
             fail_silently=False,
         )
 
         return
-
-    def get(self, request, *args, **kwargs):
-        self.serializer_class = AccountListSerializer
-        return self.list(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
 
@@ -69,15 +73,24 @@ class AccountListCreate(generics.ListCreateAPIView):
         self.send_password_email(request.data["email"], random_numbers)
         return created_obj
 
+    def get(self, request, *args, **kwargs):
+        self.serializer_class = AccountListSerializer
+        return self.list(request, *args, **kwargs)
+
 
 class AccountRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Account.objects.all()
     serializer_class = AccountDetailSerializer
 
+    def delete(self, request, *args, **kwargs):
+        self.permission_classes = [IsAuthenticated, IsSuperAdmin | IsSupervisor]
+        return self.destroy(request, *args, **kwargs)
+
 
 class AccountUpdateStatusView(mixins.UpdateModelMixin, generics.GenericAPIView):
     queryset = Account.objects.all()
     serializer_class = AccountUpdateStatusSerializer
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
 
     def put(self, request, *args, **kwargs):
         user_id = kwargs.get("pk")
@@ -153,17 +166,27 @@ class ForgotPasswordView(mixins.CreateModelMixin, generics.GenericAPIView):
     serializer_class = AccountEmailTokenSerializer
     permission_classes = [AllowAny]
 
-    def send_forgot_password_email(self, recipient_email, token):
+    def send_forgot_password_email(self, recipient_email, token, account_name):
         subject = "Test Forgot Password"
-        message = f"Your token : {token}"
         recipient_list = [recipient_email]
 
+        forgot_password_url = f"http://127.0.0.1:8000/{token}"
+
+        context = {
+            "account_name": account_name,
+            "forgot_password_url": forgot_password_url,
+        }
+
         send_mail(
-            subject,
-            message,
-            "hasbiasshidiq@gmail.com",  # From email
-            recipient_list,
+            subject=subject,
+            message="",
+            from_email="hasbiasshidiq@gmail.com",  # From email
+            recipient_list=recipient_list,
             fail_silently=False,
+            html_message=render_to_string(
+                template_name="forgot-password.html",
+                context=context,
+            ),
         )
 
         return
@@ -185,13 +208,13 @@ class ForgotPasswordView(mixins.CreateModelMixin, generics.GenericAPIView):
 
         token = uuid.uuid4()
 
-        self.send_forgot_password_email(user_email, token)
+        self.send_forgot_password_email(user_email, token, account.name)
 
         AccountEmailToken.objects.create(
             account=account,
             token=token,
             status=AccountEmailTokenStatusEnum.active.value,
-            expired_at=datetime.now() + timedelta(hours=24),
+            expired_at=timezone.now() + timedelta(hours=24),
         )
         return Response({"status": "OK"}, status=status.HTTP_200_OK)
 
